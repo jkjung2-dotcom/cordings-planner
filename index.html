@@ -72,13 +72,10 @@ async function upload(force=false){if(!user||!remoteReady){status('로그인 및
 function queueUpload(){if(loadingRemote||!user||!remoteReady||!remoteExists)return;clearTimeout(uploadTimer);uploadTimer=setTimeout(()=>upload(false),1200)}
 window.addEventListener('cordings-local-saved',queueUpload);
 async function setup(){if(initialized)return;const raw=JSON.stringify(defaultFirebaseConfig);if(!raw){status('Firebase 초기화 중입니다.');ui('googleLogin').disabled=true;return}try{const config=validate(raw);app=initializeApp(config,'cordings-sync');auth=getAuth(app);db=getFirestore(app);initialized=true;ui('googleLogin').disabled=false;onAuthStateChanged(auth,u=>{clearTimeout(uploadTimer);if(unsub){unsub();unsub=null}user=u;showButtons(!!u);ui('cloudUser').textContent=u?'로그인: '+(u.email||u.uid):'로그인하지 않음';if(u)listen();else{remoteReady=false;remoteExists=false;status('로컬 저장 모드')}});try{await getRedirectResult(auth)}catch(e){status('로그인 복귀 오류: '+e.message,'error')}}catch(e){status('설정 오류: '+e.message,'error')}}
-ui('saveFirebase').onclick=()=>{try{const c=validate(ui('firebaseConfig').value);localStorage.setItem(cfgKey,JSON.stringify(c));alert('설정 저장 완료. 페이지를 새로고침해 적용합니다.');location.reload()}catch(e){status('설정 JSON 확인: '+e.message,'error')}};
-ui('clearFirebase').onclick=()=>{if(confirm('이 기기에 저장된 Firebase 프로젝트 설정을 지울까요?')){localStorage.removeItem(cfgKey);location.reload()}};
 ui('googleLogin').onclick=async()=>{if(!auth){status('로그인 초기화 실패. 브라우저에서 새로고침하세요.','error');return}try{status('Google 로그인 페이지로 이동 중…');await signInWithPopup(auth,new GoogleAuthProvider())}catch(e){status('팝업 로그인 실패: '+(e.code||'')+' '+e.message+' · 브라우저에서 팝업 허용 후 다시 시도하세요.','error')}};
 ui('googleLogout').onclick=async()=>{if(auth)await signOut(auth)};
 ui('cloudUpload').onclick=()=>upload(true);
 ui('cloudDownload').onclick=()=>{if(!remoteReady||!remoteExists||!latestRemote){alert('클라우드에 불러올 데이터가 없습니다.');return}if(confirm('이 기기의 입력 내용을 클라우드 자료로 바꿀까요?')){applyData(latestRemote);status('클라우드 자료 불러옴','ok')}};
-ui('firebaseConfig').value=JSON.stringify(defaultFirebaseConfig,null,2);
 setup();
 
 </script></html>
